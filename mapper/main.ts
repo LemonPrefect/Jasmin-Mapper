@@ -102,8 +102,16 @@ app.post("/remove", (req: Request, res: Response) => {
   try{
     NginxService.remove(data.prefix);
     NginxService.reload();
+    const mapsReadyToRemove = maps.filter(m => m.prefix == data.prefix);
+    if(mapsReadyToRemove.length === 0){
+      return res.send(JSON.stringify({
+        code: 0,
+        msg: "Map already doesn't exist in maps."
+      }));
+    }
+    const streamsReadyToRemove = mapsReadyToRemove[0].containers.map(c => c.alias);
     maps = maps.filter(map => map.prefix != data.prefix);
-    upstreams = upstreams.filter(c => !c.startsWith(data.prefix));
+    upstreams = upstreams.filter(c => !streamsReadyToRemove.includes(c));
     return res.send(JSON.stringify({
       code: 0,
       msg: `Removed ${data.prefix}.`
