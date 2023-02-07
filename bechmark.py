@@ -5,8 +5,11 @@ import os
 import httpx as requests
 
 
+MAPPER_PREFIX = os.getenv('MAPPER_PREFIX')
+SUFFIX = os.getenv('SUFFIX')
+
 def benchmark():
-    session = requests.Client(base_url=f"https://https://mapper-{os.getenv('MAPPER_PREFIX')}.{os.getenv('SUFFIX')}", verify=False)
+    session = requests.Client(base_url=f"https://https://mapper-{MAPPER_PREFIX}.{SUFFIX}", verify=False)
     prefix = str(uuid4())
     response = session.post("/add", headers={
         "authorization": "123"
