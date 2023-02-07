@@ -9,13 +9,19 @@ const ERROR_PAGE =
   '<!DOCTYPE html><html xmlns=http://www.w3.org/1999/xhtml><head><meta http-equiv=Content-Type content="text/html; charset=utf-8"><title>Jasmin-Mapper 出错了</title><style>body{font:15px "Microsoft Yahei",Verdana;color:#333;background-color:#e7e8e9;margin:0}#c{border:1px solid #DCDDE2;background-color:#fff;padding:20% 40px 50px 40px}h1{margin:0;height:32px;font-size:18px;color:#1f1f1f;line-height:35px}p{margin:8px 1px}.x{background-color:#5f83a5e1;font-size:1px;height:2px;margin-bottom:8px}.x span{background-color:#002FA7;height:2px;border-right:#FFF solid 1px;display:block;width:100px}a{text-decoration:none;font-size:8px;color:#848484}</style><body><div id=c><h1 class=warning>Jasmin Mapper 由 Deno 强力驱动</h1><div class=x><span></span></div><p>你所访问的容器没有找到或容器映射丢失！</p></div><!--Copyright Ancient VBR -->';
 const AUTHORIZATION = Deno.env.get("AUTHORIZATION") ?? Deno.exit(2);
 const SUFFIX = Deno.env.get("DOMAIN_SUFFIX") ?? Deno.exit(3);
+const MAPPER_PREFIX = Deno.env.get("MAPPER_PREFIX") ?? Deno.exit(4);
 
 let maps: Array<IMap> = NginxService.resume();
+let upstreams: Array<string> = [] as Array<string>;
+for(const map of maps){
+  upstreams.push(...(map.containers.map(c => c.alias)));
+}
+
 export const app: Express = express();
 app.use(express.json());
 
 app.all("/\\w+", function (req: Request, res: Request, next: Next) {
-  if (!req.get("authorization") || req.get("authorization") != AUTHORIZATION || req.hostname != `mapper.${SUFFIX}`) {
+  if (!req.get("authorization") || req.get("authorization") != AUTHORIZATION || req.hostname != `mapper-${MAPPER_PREFIX}.${SUFFIX}`) {
     return res.status(404).send(ERROR_PAGE);
   } else {
     res.setHeader("Content-Type", "application/json;charset=utf-8");
@@ -35,12 +41,15 @@ app.all("*", function (req: Request, res: Request, next: Next) {
 
 app.post("/add", (req: Request, res: Response) => {
   const data = normalize(req.body) as IMap;
+  
   if(!data || !data.prefix || !data.containers || data.containers.length === 0){
     return res.send(JSON.stringify({
       code: 1,
       msg: "Data structure is not sufficient."
     })); 
   }
+
+  // Check the prefix not duplicated.
   const map = maps.filter(map => map.prefix == data.prefix);
   if(map.length > 0){
     return res.send(JSON.stringify({
@@ -48,6 +57,16 @@ app.post("/add", (req: Request, res: Response) => {
       msg: `Duplicated ${data.prefix}.`
     }));
   }
+
+  // Alias duplicated check, as which may cause the crash of nginx reloading.
+  const aliasesDuplicated: Array<string> = data.containers.map(c => c.alias).filter(e => upstreams.includes(e));
+  if(aliasesDuplicated.length != 0){
+    return res.send(JSON.stringify({
+      code: 1,
+      msg: `Duplicated alias ${data.prefix}.`
+    }));
+  }
+
   try{
     NginxService.map(data, SUFFIX);
     NginxService.reload();
@@ -76,6 +95,7 @@ app.post("/remove", (req: Request, res: Response) => {
     NginxService.remove(data.prefix);
     NginxService.reload();
     maps = maps.filter(map => map.prefix != data.prefix);
+    upstreams = upstreams.filter(c => !c.startsWith(data.prefix));
     return res.send(JSON.stringify({
       code: 0,
       msg: `Removed ${data.prefix}.`
@@ -115,10 +135,3 @@ app.post("/*", (req: Request, res: Response) => {
 });
 
 app.listen(8787);
-
-
-
-
-
-
-

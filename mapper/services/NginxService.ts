@@ -69,12 +69,11 @@ export class NginxService{
   }
 
   public static remove(prefix: string): void{
-    if (
-      fs.existsSync(`/etc/nginx/container.conf.d/stream/${prefix}.conf`) ||
-      fs.existsSync(`/etc/nginx/container.conf.d/map/${prefix}.conf`)
-    ) {
-      fs.rmSync(`/etc/nginx/container.conf.d/stream/${prefix}.conf`);
-      fs.rmSync(`/etc/nginx/container.conf.d/map/${prefix}.conf`);  
+    if (fs.existsSync(`/etc/nginx/container.conf.d/stream/${prefix}.conf`)){
+      fs.rmSync(`/etc/nginx/container.conf.d/stream/${prefix}.conf`); 
+    }
+    if(fs.existsSync(`/etc/nginx/container.conf.d/map/${prefix}.conf`)){
+      fs.rmSync(`/etc/nginx/container.conf.d/map/${prefix}.conf`);
     }
   }
 }
