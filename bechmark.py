@@ -6,13 +6,14 @@ import httpx as requests
 
 
 MAPPER_PREFIX = os.getenv('MAPPER_PREFIX')
-SUFFIX = os.getenv('SUFFIX')
+DOMAIN_SUFFIX = os.getenv('DOMAIN_SUFFIX')
+AUTHORIZATION = os.getenv('AUTHORIZATION')
 
 def benchmark():
-    session = requests.Client(base_url=f"https://https://mapper-{MAPPER_PREFIX}.{SUFFIX}", verify=False)
+    session = requests.Client(base_url=f"https://mapper-{MAPPER_PREFIX}.{DOMAIN_SUFFIX}:1443", verify=False, timeout=2)
     prefix = str(uuid4())
     response = session.post("/add", headers={
-        "authorization": "123"
+        "authorization": AUTHORIZATION
     }, json={
         "prefix": prefix,
         "containers": [{
@@ -21,8 +22,9 @@ def benchmark():
             "port": randint(1, 65535)} for x in range(3)
         ]}
     )
+    print(response.text)
     response = session.post("/remove", headers={
-        "authorization": "123"
+        "authorization": AUTHORIZATION
     }, json={
         "prefix": prefix,
         "containers": []}
@@ -42,7 +44,7 @@ class MyThread(threading.Thread):
 
 def f():
     threads = []
-    for n in range(100):
+    for n in range(1):
         threads.append(MyThread(target=benchmark, args=(n,)))
     for thread in threads:
         thread.start()
