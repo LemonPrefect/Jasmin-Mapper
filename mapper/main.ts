@@ -39,6 +39,14 @@ app.all("*", function (req: Request, res: Request, next: Next) {
   next();
 });
 
+app.use((err: Error, req: Request, res: Response, next: Next) => {
+  res.setHeader("Content-Type", "application/json;charset=utf-8");
+  return res.send(JSON.stringify({
+    code: 1,
+    msg: err.message
+  })); 
+})
+
 app.post("/add", (req: Request, res: Response) => {
   const data = normalize(req.body) as IMap;
   
