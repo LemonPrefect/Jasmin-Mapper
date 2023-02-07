@@ -1,4 +1,4 @@
-ARG DENO_VERSION=1.30.2
+ARG DENO_VERSION=1.30.3
 
 FROM denoland/deno:bin-$DENO_VERSION AS deno
 FROM nginx:1.23.3
