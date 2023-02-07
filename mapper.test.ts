@@ -8,7 +8,7 @@ const SUFFIX = Deno.env.get("DOMAIN_SUFFIX") ?? Deno.exit(3);
 const MAPPER_PREFIX = Deno.env.get("MAPPER_PREFIX") ?? Deno.exit(4);
 const AUTHORIZATION = Deno.env.get("AUTHORIZATION") ?? Deno.exit(2);
 
-const URL = `https://mapper-${MAPPER_PREFIX}.${SUFFIX}:1443`;
+const URL = `https://mapper-${MAPPER_PREFIX}.${SUFFIX}`;
 
 interface IResponse {
   code: number;
