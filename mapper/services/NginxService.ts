@@ -1,4 +1,6 @@
 import * as fs from "https://deno.land/std@0.167.0/node/fs.ts";
+
+import { IContainer } from "../interfaces/IContainer.ts";
 import { IMap } from "../interfaces/IMap.ts";
 
 export class NginxService{
@@ -20,13 +22,19 @@ export class NginxService{
   public static resume(): Array<IMap>{
     const result: Array<IMap> = [] as Array<IMap>;
     const upstreams: Array<string> = fs.readdirSync("/etc/nginx/container.conf.d/stream/");
+    console.log(upstreams);
     for(const upstream of upstreams){
-      const data = fs.readFileSync(upstream).toString().split("\n");
+      const data = fs.readFileSync(`/etc/nginx/container.conf.d/stream/${upstream}`).toString().split("\n");
       const map: IMap = {
-        prefix: upstream.split(".")[0]
+        prefix: upstream.split(".")[0],
+        containers: [] as Array<IContainer>
       } as IMap;
       for(const datum of data){
+        if(datum == ""){
+          continue;
+        }
         const exploded = datum.split(" ");
+        console.log({datum, exploded});
         const [ ip, port ] = exploded[4]!.replace(";", "").split(":");
         map.containers.push({
           ip: ip.trim(), 
